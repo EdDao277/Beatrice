@@ -3,6 +3,7 @@ import heroImg from './assets/hero.png'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import './App.css'
+import BackendConnectionStatus from './components/BackendConnectionStatus'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -27,6 +28,7 @@ function App() {
           onClick={() => setCount((count) => count + 1)}
         >
           Count is {count}
+          <BackendConnectionStatus />
         </button>
       </section>
 
