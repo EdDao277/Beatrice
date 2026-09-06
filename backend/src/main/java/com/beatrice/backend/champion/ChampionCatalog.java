@@ -19,6 +19,7 @@ public class ChampionCatalog {
     private final ObjectMapper mapper;
     private Catalog cached;
     private Map<String, Path> images = Map.of();
+    private Map<Long,String> numericIds = Map.of();
     public ChampionCatalog(@Value("${beatrice.ddragon.path:../data/ddragon/extracted/16.17.1}") String path, ObjectMapper mapper) {
         this.root = Path.of(path).toAbsolutePath().normalize();
         this.mapper = mapper;
@@ -29,6 +30,7 @@ public class ChampionCatalog {
             var json = mapper.readTree(input);
             var champions = new ArrayList<Champion>();
             var paths = new HashMap<String, Path>();
+            var keys = new HashMap<Long,String>();
             for (var node : json.path("data")) {
                 String id = node.path("id").asString();
                 String name = node.path("name").asString();
@@ -36,11 +38,13 @@ public class ChampionCatalog {
                 if (!id.matches("[A-Za-z0-9]+") || !file.matches("[A-Za-z0-9]+\\.png") || name.isBlank())
                     throw new IOException("Invalid catalog entry");
                 champions.add(new Champion(id, name, "/api/champions/" + id + "/portrait"));
+                if (node.path("key").asLong(0)>0) keys.put(node.path("key").asLong(),id);
                 paths.put(id, root.resolve("img/champion").resolve(file));
             }
             if (champions.isEmpty() || json.path("version").asString().isBlank()) throw new IOException("Empty catalog");
             champions.sort(Comparator.comparing(Champion::name));
             images = Map.copyOf(paths);
+            numericIds = Map.copyOf(keys);
             cached = new Catalog(json.path("version").asString(), List.copyOf(champions));
             return cached;
         } catch (IOException | RuntimeException error) {
@@ -50,6 +54,10 @@ public class ChampionCatalog {
     }
     public Champion findByName(String name) {
         return catalog().champions().stream().filter(c -> c.name().equalsIgnoreCase(name.strip())).findFirst().orElse(null);
+    }
+    public String idForKey(long key) {
+        catalog();
+        return numericIds.getOrDefault(key,String.valueOf(key));
     }
     public Champion require(String id) {
         return catalog().champions().stream().filter(c -> c.id().equals(id)).findFirst()

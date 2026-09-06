@@ -6,6 +6,7 @@ import java.util.concurrent.*;
 import jakarta.annotation.PreDestroy;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.*;
 import com.beatrice.backend.team.TeamService;
@@ -16,7 +17,9 @@ import static org.springframework.http.HttpStatus.*;
 @Service
 public class RiotProfiles {
     public record Rank(String tier, String division, int lp, int wins, int losses) {}
-    public record Snapshot(String riotId, String iconUrl, Rank rank, RiotStats.Sample sample, int requestedMatches, Instant updatedAt) {}
+    public record Snapshot(String riotId, String iconUrl, Rank rank, RiotStats.Sample sample, int requestedMatches, Instant updatedAt,
+        List<Integer> queues, Integer scannedMatches, Boolean historyScanLimited,
+        RiotRanks.Rank highestRank, List<RiotMastery.Champion> mastery, Instant splitStart, Boolean splitComplete, Integer splitWins) {}
     public record State(Snapshot profile, boolean refreshing, String message) {}
     private record Progress(boolean refreshing, String message, long attemptedAt) {}
     private final Map<String,Progress> jobs = new ConcurrentHashMap<>();
@@ -27,8 +30,12 @@ public class RiotProfiles {
     private final ObjectMapper mapper;
     private final TeamService teams;
     private final ChampionCatalog catalog;
-    public RiotProfiles(RiotClient riot, JdbcTemplate jdbc, ObjectMapper mapper, TeamService teams, ChampionCatalog catalog) {
+    private final RiotSplitHistory splitHistory;
+    private final Instant splitStart;
+    public RiotProfiles(RiotClient riot, JdbcTemplate jdbc, ObjectMapper mapper, TeamService teams, ChampionCatalog catalog,
+        RiotSplitHistory splitHistory, @Value("${beatrice.riot.split-start:2026-07-29T19:00:00Z}") String splitStart) {
         this.riot=riot; this.jdbc=jdbc; this.mapper=mapper; this.teams=teams; this.catalog=catalog;
+        this.splitHistory=splitHistory; this.splitStart=Instant.parse(splitStart);
     }
     @PreDestroy void stop() { worker.shutdownNow(); }
     private String savedId(long teamId, Role role) {
@@ -82,22 +89,21 @@ public class RiotProfiles {
         Rank rank = null;
         for (var league : leagues) if (league.path("queueType").asString().equals("RANKED_SOLO_5x5"))
             rank = new Rank(league.path("tier").asString(),league.path("rank").asString(),league.path("leaguePoints").asInt(),league.path("wins").asInt(),league.path("losses").asInt());
-        var ids = riot.get(true,"/lol/match/v5/matches/by-puuid/"+encoded+"/ids?queue=420&start=0&count=50");
-        if (!ids.isArray()) throw new IllegalStateException("Invalid match list");
-        var unique = new LinkedHashSet<String>(); for (var match : ids) unique.add(match.asString());
-        var matches = new ArrayList<JsonNode>();
-        for (String matchId : unique.stream().limit(50).toList()) {
-            jobs.put(key,new Progress(true,"Loading Solo/Duo matches "+(matches.size()+1)+" / "+Math.min(unique.size(),50)+"…",started));
-            matches.add(riot.get(true,"/lol/match/v5/matches/"+RiotClient.segment(matchId)));
-        }
+        var highest = RiotRanks.highest(leagues);
+        var mastery = RiotMastery.top(riot.get(false,"/lol/champion-mastery/v4/champion-masteries/by-puuid/"+encoded+"/top?count=3"),catalog::idForKey);
+        Instant through = Instant.now();
+        if (!splitStart.isBefore(through)) throw new IllegalStateException("Split start must be in the past");
+        var history = splitHistory.sync(puuid,splitStart,through,path -> riot.get(true,path),downloaded ->
+            jobs.put(key,new Progress(true,"Split sync in progress · "+downloaded+" new matches cached…",started)));
         String patch = catalog.catalog().version();
         if (!patch.matches("[0-9]+\\.[0-9]+\\.[0-9]+")) throw new IllegalStateException("Invalid asset patch");
         String icon = "https://ddragon.leagueoflegends.com/cdn/"+patch+"/img/profileicon/"+summoner.path("profileIconId").asInt()+".png";
-        var sample = RiotStats.summarize(puuid,matches);
+        var sample = history.sample();
         var named = sample.champions().stream().map(c -> new RiotStats.Champion(c.id(),
             catalog.catalog().champions().stream().filter(entry -> entry.id().equals(c.id())).map(ChampionCatalog.Champion::name).findFirst().orElse(c.id()),
             c.games(),c.wins(),c.winRate())).toList();
         return new Snapshot(account.path("gameName").asString()+"#"+account.path("tagLine").asString(),icon,rank,
-            new RiotStats.Sample(sample.games(),named),50,Instant.now());
+            new RiotStats.Sample(sample.games(),named,sample.modeGames()),0,through,
+            RiotStats.QUEUES,null,null,highest,mastery,splitStart,history.complete(),sample.wins());
     }
 }

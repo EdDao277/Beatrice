@@ -692,6 +692,22 @@ footer {
 .riot-champion strong { display: block; font-size: 12px; overflow-wrap: anywhere; }
 .riot-champion small { display: block; font-size: 10px; line-height: 1.5; }
 .riot-updated { display: block; font-size: 9px; margin: 16px 0 10px; color: #aaa; }
-.riot-refresh { display: block; width: 100%; margin-top: 14px; font-size: 11px; }
+.riot-refresh { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; margin: 8px auto; font-size: 23px; border-radius: 50%; }
+.riot-refresh[aria-busy="true"] span { animation: riot-spin 1.5s linear infinite; }
+@keyframes riot-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .riot-refresh[aria-busy="true"] span { animation: none; } }
+.riot-mastery { border-bottom: 1px solid #40382c; padding-bottom: 16px; margin-bottom: 16px; }
+.riot-mastery > small { color: #bd9a64; font-size: 9px; letter-spacing: 1px; }
+.riot-mastery > div { display: flex; justify-content: center; gap: 12px; margin-top: 12px; }
+.riot-mastery small { display: block; font-size: 9px; }
+.riot-mastery img { border: 1px solid #9b7948; }
+.riot-champion-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+.riot-champion-table th { color: #bd9a64; font-weight: 400; padding: 8px 2px; }
+.riot-champion-table td { border-top: 1px solid #302c27; padding: 3px 2px; }
+.riot-champion-table th:first-child { text-align: left; }
+.riot-champion-table .riot-champion { margin: 5px 0; gap: 5px; }
+.riot-champion-table .riot-champion img { flex-shrink: 0; }
+.riot-champion-table .riot-champion strong { font-size: 10px; }
+.riot-show-all { margin-top: 10px; width: 100%; font-size: 10px; }
 .riot-player-card .error { font-size: 11px; padding: 8px; overflow-wrap: anywhere; }
 footer > p { max-width: 900px; font-size: 9px; line-height: 1.6; letter-spacing: 0; color: #929292; }

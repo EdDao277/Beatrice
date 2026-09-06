@@ -13,12 +13,13 @@ class ChampionCatalogTest {
         Files.createDirectories(root.resolve("data/en_US"));
         Files.createDirectories(root.resolve("img/champion"));
         Files.writeString(root.resolve("data/en_US/champion.json"), """
-            {"version":"test","data":{"MonkeyKing":{"id":"MonkeyKing","name":"Wukong","image":{"full":"MonkeyKing.png"}}}}
+            {"version":"test","data":{"MonkeyKing":{"id":"MonkeyKing","key":"62","name":"Wukong","image":{"full":"MonkeyKing.png"}}}}
             """);
         Files.write(root.resolve("img/champion/MonkeyKing.png"), new byte[]{1, 2, 3});
         var catalog = new ChampionCatalog(root.toString(), JsonMapper.builder().build());
         assertEquals("Wukong", catalog.catalog().champions().getFirst().name());
         assertEquals("MonkeyKing", catalog.findByName(" wUkOnG ").id());
+        assertEquals("MonkeyKing", catalog.idForKey(62));
         assertTrue(catalog.portrait("MonkeyKing").exists());
         assertThrows(ResponseStatusException.class, () -> catalog.portrait("../champion.json"));
     }
