@@ -1,0 +1,108 @@
+/* Shared portrait picker: the same catalog is used for pools and both draft formats. */
+.champion-search { margin-bottom: 16px; }
+.champion-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(66px, 1fr)); gap: 9px; max-height: 440px; overflow-y: auto; padding: 4px; scrollbar-color: #8d7048 #16171a; }
+.champion-tile { min-width: 0; padding: 0 0 6px; background: #17171b; border: 1px solid #554633; border-radius: 0; overflow: hidden; }
+.champion-tile img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; }
+.champion-tile span { display: block; margin-top: 5px; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.champion-tile.active { border-color: #efd293; box-shadow: 0 0 0 2px #b4945e, 0 0 20px #a4464633; }
+.champion-tile:disabled { filter: grayscale(1); opacity: .3; }
+.pool-picker-panel { margin-top: 16px; padding: 12px; background: #101114; border: 1px solid #514532; }
+.pool-picker-panel .champion-grid { max-height: 270px; }
+.pool-champion { display: flex; align-items: center; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
+.pool-champion img { border: 1px solid #91764e; }
+.legacy-champion { display: block; color: #d9ad6b; font-size: 10px; }
+.draft-toolbar { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 16px; }
+.draft-toolbar > label { min-width: 180px; margin-left: auto; }
+.format-toggle { display: flex; border: 1px solid #5a4835; padding: 4px; background: #101114; border-radius: 7px; }
+.format-toggle button { background: transparent; border: 0; font-size: 12px; }
+.format-toggle button[aria-pressed=true] { background: linear-gradient(120deg, #643039, #342026); box-shadow: inset 0 0 0 1px #b16a61; color: #f9e0b2; }
+.draft-note { font-size: 11px; line-height: 1.6; }
+.draft-arena { display: grid; grid-template-columns: minmax(130px, .8fr) minmax(155px, 1fr) minmax(270px, 2.7fr) minmax(155px, 1fr) minmax(130px, .8fr); gap: 12px; align-items: stretch; }
+.draft-team, .draft-center, .recommendation-panel { min-width: 0; padding: 18px 12px; border: 1px solid #39302b; background: #151518; }
+.draft-team.blue { border-top: 2px solid #5e9dac; background: linear-gradient(#19232a, #13171a 45%); }
+.draft-team.red { border-top: 2px solid #b75059; background: linear-gradient(#2b1d22, #191418 45%); }
+.draft-team h3 { font: 20px Georgia, serif; overflow-wrap: anywhere; margin: 10px 0 18px; }
+.ban-slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-bottom: 22px; }
+.ban-slot { aspect-ratio: 1; display: grid; place-items: center; font-size: 14px; color: #a98269; background: #101013; border: 1px solid #6d443c; overflow: hidden; }
+.ban-slot img { width: 100%; filter: saturate(.4); }
+.pick-slot { display: flex; align-items: center; gap: 9px; min-height: 84px; border-bottom: 1px solid #ffffff0d; }
+.pick-slot.current { background: #b8964920; box-shadow: inset 2px 0 #d2b36f; }
+.pick-portrait { width: 42px; height: 42px; flex-shrink: 0; border: 1px solid #806b4f; border-radius: 50%; overflow: hidden; display: grid; place-items: center; color: #b69b6b; }
+.pick-portrait img { width: 100%; }
+.pick-slot small { font-size: 9px; color: #b09c7f; letter-spacing: 1px; }
+.pick-slot strong { display: block; font-size: 12px; margin-top: 5px; overflow-wrap: anywhere; }
+.draft-team .draft-note { margin-top: 18px; }
+.draft-center { border-top: 2px solid #aa8151; background: radial-gradient(ellipse at top, #45212766, transparent 55%), #111214; }
+.draft-phase { text-align: center; min-height: 105px; }
+.draft-phase h2 { margin: 10px 0; font: 24px Georgia, serif; color: #f4e4c7; }
+.draft-phase > span:last-child { color: #c39776; font-size: 11px; letter-spacing: 2px; }
+.ban-side-toggle { display: flex; gap: 8px; justify-content: center; margin: 0 0 16px; }
+.ban-side-toggle button { font-size: 11px; padding: 7px 12px; }
+.ban-side-toggle button[aria-pressed=true] { border-color: #c29c67; background: #423329; }
+.draft-controls { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 18px; }
+.draft-controls button { font-size: 11px; padding: 10px; }
+.recommendation-panel { background: #141416; border-style: dashed; }
+.recommendation-panel h3 { font: 19px Georgia, serif; margin: 14px 0; }
+.recommendation-panel .eyebrow { font-size: 8px; letter-spacing: 1.5px; }
+.recommendation-panel p { font-size: 11px; line-height: 1.8; }
+.recommendation { display: flex; align-items: center; gap: 8px; padding: 12px 0; border-bottom: 1px solid #ffffff0c; }
+.recommendation strong { font-size: 11px; }
+.recommendation small { display: block; color: #afa28e; font-size: 10px; }
+.intel-placeholder { text-align: center; padding: 45px 0; color: #7d6850; font-size: 32px; }
+.intel-placeholder small { display: block; font-size: 10px; }
+.result-bar { margin-top: 20px; border: 1px solid #5b4533; padding: 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; background: linear-gradient(100deg, #24201c, #19171a); }
+.result-bar h3 { margin: 8px 0; font: 23px Georgia, serif; }
+.result-bar p { margin-bottom: 0; font-size: 12px; }
+.result-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.win-button { background: #253c36; border-color: #759689; }
+.loss-button { background: #4a252c; border-color: #a85c63; }
+.result-bar [role=alert], .result-bar [role=status] { width: 100%; }
+.result-badge { display: inline-block; padding: 5px 12px; border: 1px solid #947151; font-size: 11px; margin-bottom: 12px; }
+.result-badge.win { color: #98d4b5; }.result-badge.loss { color: #e996a0; }
+.game-record time { color: #a9a095; font-size: 12px; }
+.history-compositions { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0; }
+.history-picks { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.history-picks > div { text-align: center; font-size: 10px; }
+.history-picks span { display: block; margin-top: 5px; }
+.game-record details { border-top: 1px solid #41362d; padding-top: 16px; font-size: 12px; line-height: 1.8; }
+.game-record summary { cursor: pointer; color: #c4a779; margin-bottom: 14px; }
+@media (max-width: 1500px) {
+  .draft-arena { grid-template-columns: minmax(135px, 1fr) minmax(260px, 2.7fr) minmax(135px, 1fr); }
+  .recommendation-panel:first-child { grid-column: 1 / 3; grid-row: 2; }
+  .recommendation-panel:last-child { grid-column: 3; grid-row: 2; }
+  .recommendation-panel:first-child .recommendation { display: inline-flex; margin-right: 20px; }
+}
+@media (max-width: 1000px) {
+  .draft-arena { grid-template-columns: 1fr 1fr; }
+  .draft-center { grid-column: 1 / -1; grid-row: 2; }
+  .draft-team { grid-row: 1; }
+  .recommendation-panel:first-child { grid-column: 1; grid-row: 3; }
+  .recommendation-panel:last-child { grid-column: 2; grid-row: 3; }
+  .pick-slot { min-height: 61px; }
+  .draft-toolbar > label { margin-left: 0; }
+  .history-compositions { grid-template-columns: 1fr; }
+}
+@media (max-width: 500px) {
+  .draft-arena { gap: 8px; }
+  .draft-team { padding: 12px 8px; }
+  .pick-portrait { width: 32px; height: 32px; }
+  .pick-slot strong { font-size: 10px; }
+  .format-toggle button { padding: 10px; font-size: 11px; }
+  .result-bar { padding: 16px; }
+  .game-record .section-heading { align-items: flex-start; gap: 10px; }
+}
+.lineup-editor { margin: 20px 0; }
+.lineup-editor .history-compositions > section { min-width: 0; }
+.compact-lineup-picks { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+.compact-lineup-pick { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 92px; font-size: 11px; text-align: center; }
+.compact-lineup-pick span { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.compact-lineup-pick select { width: 92px; min-width: 0; padding: 6px 3px; font-size: 10px; }
+.lineup-editor > button { margin: 16px 12px 0 0; }
+.reference-explorer { margin-top: 24px; }
+.reference-filters { display: flex; flex-wrap: wrap; gap: 16px; margin: 20px 0; }
+.reference-filters label { display: grid; gap: 8px; max-width: 100%; }
+.reference-filters select { max-width: 100%; }
+.reference-table-scroll { overflow-x: auto; }
+.reference-table { width: 100%; border-collapse: collapse; text-align: left; font-size: .85rem; }
+.reference-table th, .reference-table td { padding: 12px; border-bottom: 1px solid #39342c; }
+.reference-table th { color: #c6a16b; }

@@ -27,6 +27,9 @@ backend/target/
 Thumbs.db
 desktop.ini
 
+# Ddragons data and image assets
+/data/ddragon/
+
 # Temporary files
 *.tmp
 *.temp

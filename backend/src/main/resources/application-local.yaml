@@ -1,0 +1,11 @@
+# Activate with --spring.profiles.active=local. The root .env is a local file,
+# not a file packaged into the JAR. Run Maven from backend/ as documented.
+spring:
+  config:
+    import: "optional:file:../.env[.properties]"
+  datasource:
+    url: jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/${POSTGRES_DB:beatrice}
+    username: ${POSTGRES_USER:beatrice}
+    password: ${POSTGRES_PASSWORD}
+server:
+  address: 127.0.0.1
