@@ -7,6 +7,7 @@ const team = { id: 1, name: 'Ravens', version: 0, players: roles.map(role => ({ 
 const catalog = { version: 'test', champions: Array.from({length: 20}, (_, n) => ({ id: 'C'+n, name: 'Champion '+n, portrait: '/C'+n+'.png' })) };
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 it('locks a selection, undoes it, and confirms a format reset', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('[]')));
   const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
   render(<DraftBoard team={team} catalog={catalog} onPending={vi.fn()} onBusy={vi.fn()} onRecorded={vi.fn()} />);
   await userEvent.click(screen.getByRole('button', { name: 'Champion 0' }));
@@ -21,7 +22,7 @@ it('locks a selection, undoes it, and confirms a format reset', async () => {
 });
 it('records a completed tournament and retries an uncertain save with the same payload', async () => {
   const fetchMock = vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce(new Response(JSON.stringify({ id: 4 })));
-  vi.stubGlobal('fetch', fetchMock);
+  vi.stubGlobal('fetch', (url: string, options?: RequestInit) => url.includes('/datasets') ? Promise.resolve(new Response('[]')) : fetchMock(url, options));
   render(<DraftBoard team={team} catalog={catalog} onPending={vi.fn()} onBusy={vi.fn()} onRecorded={vi.fn()} />);
   await userEvent.click(screen.getByRole('button', { name: 'Tournament' }));
   for (let n=0; n<20; n++) {

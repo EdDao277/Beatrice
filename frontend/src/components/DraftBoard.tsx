@@ -3,6 +3,7 @@ import type { Team } from '../api/teams';
 import type { Catalog } from '../api/champions';
 import { recordGame } from '../api/games';
 import type { Game, GameRequest } from '../api/games';
+import useDraftAdvice from './useDraftAdvice';
 import SavedLineups from './SavedLineups';
 import { appendAction, formatLabel, nextTurn, unavailable } from '../draft/rules';
 import type { Action, Format, Side } from '../draft/rules';
@@ -34,10 +35,7 @@ export default function DraftBoard({ team, catalog, onPending, onBusy, onRecorde
   useEffect(() => { onPending((actions.length > 0 && !saved) || lineupDirty); }, [actions.length, saved, lineupDirty, onPending]);
   useEffect(() => { onBusy(busy || lineupBusy); }, [busy, lineupBusy, onBusy]);
   const champion = (id: string | null) => catalog.champions.find(c => c.id === id);
-  const shortlist = team.players.flatMap(p => p.champions.map(c => ({ ...c, player: p.name || p.role,
-    entry: catalog.champions.find(entry => entry.name.toLowerCase() === c.name.toLowerCase()) })))
-    .filter(c => c.entry && !actions.some(a => a.championId === c.entry!.id))
-    .sort((a,b) => b.comfort - a.comfort).slice(0, 5);
+  const advice = useDraftAdvice({ format, actions });
 
   function reset(nextFormat = format) {
     if (lineupBusy || (lineupDirty && !window.confirm('Discard unsaved lineup edits and start a new draft?'))) return;
@@ -94,14 +92,7 @@ export default function DraftBoard({ team, catalog, onPending, onBusy, onRecorde
       ? 'Enter five bans for each side in any order, then follow the pick sequence. Opposing duplicate bans are allowed.'
       : 'Standard single-game tournament draft: bans → picks → bans → picks. Series-wide Fearless restrictions are not included.'}</p>
     <div className="draft-arena">
-      <aside className="recommendation-panel">
-        <span className="eyebrow">YOUR INTELLIGENCE</span><h3>Comfort shortlist</h3>
-        <p className="muted">Available pool entries, highest comfort first. Not AI or matchup predictions.</p>
-        {shortlist.length ? shortlist.map((c,n) => <div className="recommendation" key={n}>
-          <img src={c.entry!.portrait} alt="" width="36" height="36" />
-          <div><strong>{c.entry!.name}</strong><small>{c.player} · {c.comfort}/10</small></div>
-        </div>) : <p className="muted">No available pool entries. Add champions to your roster, or undo a selection to make a saved comfort pick available again.</p>}
-      </aside>
+      {advice.left}
       {teamColumn('BLUE')}
       <section className="draft-center">
         <div className="draft-phase" aria-live="polite"><span className="eyebrow">{actions.length} / 20 ACTIONS</span>
@@ -118,14 +109,14 @@ export default function DraftBoard({ team, catalog, onPending, onBusy, onRecorde
           <button className="primary" disabled={locked || !turn || !selected || blocked.includes(selected)} onClick={() => confirm(selected)}>
             {turn?.kind === 'BAN' ? 'Confirm ban' : 'Lock in pick'}</button>
           {turn?.kind === 'BAN' && <button disabled={locked} onClick={() => confirm(null)}>No ban</button>}
-          <button disabled={locked || !actions.length} onClick={() => { setActions(actions.slice(0, -1)); setSelected(null); setError(''); }}>Undo last action</button>
+          <button disabled={locked || !actions.length} onClick={() => {
+            const next = actions.slice(0, -1); setActions(next);
+            setSelected(null); setError('');
+          }}>Undo last action</button>
         </div>
       </section>
       {teamColumn('RED')}
-      <aside className="recommendation-panel"><span className="eyebrow">OPPONENT INTELLIGENCE</span><h3>Ban & matchup analysis</h3>
-        <p className="muted">Reserved for evidence-based recommendations. Opponent pools and matchup analysis are not connected yet.</p>
-        <div className="intel-placeholder">◇<small>Awaiting scouting data</small></div>
-      </aside>
+      {advice.right}
     </div>
     <section className="result-bar" aria-label="Record game result">
       <div><span className="eyebrow">AFTER THE NEXUS FALLS</span><h3>Record the outcome</h3>
@@ -136,7 +127,7 @@ export default function DraftBoard({ team, catalog, onPending, onBusy, onRecorde
         <button disabled={busy} onClick={() => reset()}>New draft</button>
       </div>
       {busy && <p role="status">Saving result…</p>}
-      {saved && <p role="status" className="success">Result saved. View it in History.</p>}
+      {saved && <p role="status" className="success">Result saved. Confirm final lanes below and save the lineup to update History.</p>}
       {error && <div role="alert" className="error">{error} {attempt && !saved && <button disabled={busy} onClick={() => save(attempt.result)}>Retry recording</button>}</div>}
     </section>
     {savedGame?.actions && <SavedLineups key={savedGame.id} game={savedGame} onState={reportLineup} onSaved={setSavedGame} />}

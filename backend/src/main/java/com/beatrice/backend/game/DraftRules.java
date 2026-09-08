@@ -14,13 +14,18 @@ public final class DraftRules {
     public static void validate(Create request, ChampionCatalog catalog) {
         if (!catalog.catalog().version().equals(request.patch())) fail("The champion patch changed. Start a new draft with the current catalog.");
         if (request.actions().size() != 20) fail("Complete the draft before recording a result.");
+        validatePrefix(request.format(),request.actions(),catalog);
+    }
+    public static void validatePrefix(Format format,List<Action> actions,ChampionCatalog catalog) {
+        if(format==null || actions==null || actions.size()>20) fail("Invalid draft state.");
         var used = new HashSet<String>();
         var blueBans = new HashSet<String>();
         var redBans = new HashSet<String>();
         int blueCount=0, redCount=0;
-        for (int n=0; n<20; n++) {
-            var a = request.actions().get(n);
-            boolean ranked = request.format() == Format.RANKED;
+        for (int n=0; n<actions.size(); n++) {
+            var a = actions.get(n);
+            if(a==null || a.kind()==null || a.side()==null) fail("Invalid draft action.");
+            boolean ranked = format == Format.RANKED;
             boolean ban = ranked ? n < 10 : n < 6 || (n >= 12 && n < 16);
             if (a.kind() != (ban ? Kind.BAN : Kind.PICK)) fail("Invalid pick / ban phase.");
             if (!(ranked && ban)) {

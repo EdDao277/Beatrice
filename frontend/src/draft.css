@@ -106,3 +106,19 @@
 .reference-table { width: 100%; border-collapse: collapse; text-align: left; font-size: .85rem; }
 .reference-table th, .reference-table td { padding: 12px; border-bottom: 1px solid #39342c; }
 .reference-table th { color: #c6a16b; }
+.draft-advice label { display: block; margin: 12px 0; font-size: 11px; }
+.draft-advice select { width: 100%; min-width: 0; margin-top: 5px; padding: 7px 3px; font-size: 11px; }
+.draft-advice p { font-size: 11px; overflow-wrap: anywhere; }
+.draft-advice summary { cursor: pointer; font-size: 11px; margin: 12px 0; }
+.draft-advice > button { width: 100%; margin-top: 12px; }
+.advice-portraits { display: flex; flex-wrap: wrap; gap: 7px; }
+.advice-portraits button { padding: 0; min-width: 44px; min-height: 44px; }
+.advice-portraits img { display: block; }
+.pick-slot { flex-wrap: wrap; }
+.advice-phase { color: #d6b374; text-transform: uppercase; letter-spacing: 1px; }
+.advice-group { padding: 10px 0 18px; border-bottom: 1px solid #39302b; margin-bottom: 16px; }
+.advice-group.active { border-bottom-color: #bb9160; }
+.draft-advice .advice-group h3 { font: 11px sans-serif; text-transform: uppercase; letter-spacing: 1px; color: #c8a56e; }
+.advice-portrait-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.advice-empty-portrait { aspect-ratio: 1; display: grid; place-items: center; border: 1px dashed #544334; background: #101013; color: #66523b; }
+.draft-advice > small { display: block; font-size: 10px; line-height: 1.7; }
