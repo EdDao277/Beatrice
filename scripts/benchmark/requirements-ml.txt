@@ -1,0 +1,4 @@
+# Isolated offline research environment; no frontend/backend dependency changes.
+numpy==2.3.5
+lightgbm==4.6.0
+scipy==1.18.1
