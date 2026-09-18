@@ -35,7 +35,8 @@ export default function DraftBoard({ team, catalog, onPending, onBusy, onRecorde
   useEffect(() => { onPending((actions.length > 0 && !saved) || lineupDirty); }, [actions.length, saved, lineupDirty, onPending]);
   useEffect(() => { onBusy(busy || lineupBusy); }, [busy, lineupBusy, onBusy]);
   const champion = (id: string | null) => catalog.champions.find(c => c.id === id);
-  const advice = useDraftAdvice({ format, actions });
+  const advice = useDraftAdvice({ format, actions, side, team, catalog, onSelect: setSelected,
+    disabled: locked || turn?.kind !== 'PICK' || actingSide !== side });
 
   function reset(nextFormat = format) {
     if (lineupBusy || (lineupDirty && !window.confirm('Discard unsaved lineup edits and start a new draft?'))) return;
@@ -48,6 +49,7 @@ export default function DraftBoard({ team, catalog, onPending, onBusy, onRecorde
     if (locked) return;
     try {
       const next = appendAction(format, actions, actingSide, id);
+      if (id && turn?.kind === 'PICK' && actingSide === side) advice.recordSelected(id);
       setActions(next); setSelected(null); setError('');
       if (format === 'RANKED' && next.length < 10 && next.filter(a => a.side === actingSide).length === 5)
         setBanSide(actingSide === 'BLUE' ? 'RED' : 'BLUE');

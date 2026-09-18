@@ -1,18 +1,42 @@
+import { useEffect, useState } from 'react';
 import { nextTurn } from '../draft/rules';
-import type { Action, Format } from '../draft/rules';
+import type { Action, Format, Side } from '../draft/rules';
+import type { Team } from '../api/teams';
+import type { Catalog } from '../api/champions';
+import { fetchPicks, recordPickSelection } from '../api/pickRecommendations';
+import type { PickContext, PickReply } from '../api/pickRecommendations';
 
-interface Props { format: Format; actions: Action[] }
+interface Props { format: Format; actions: Action[]; side: Side; team: Team; catalog: Catalog; onSelect: (id: string) => void; disabled: boolean }
 
-// UI-only staging: the old endpoint requires a target role. Do not quietly
-// select a role or present its role-specific results as team-wide advice.
-export default function useDraftAdvice({ format, actions }: Props) {
+export default function useDraftAdvice({ format, actions, side, team, catalog, onSelect, disabled }: Props) {
   const turn = nextTurn(format, actions);
+  const active = turn?.kind === 'PICK' && actions.filter(a => a.side === side && a.kind === 'PICK').length < 5;
+  const context = JSON.stringify({ format, side, patch: catalog.version, actions });
+  const key = `${team.id}:${team.version}:${context}`;
+  const [state, setState] = useState<{ key: string; reply?: PickReply; error?: boolean }>();
+  useEffect(() => {
+    if (!active) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      fetchPicks(team.id, JSON.parse(context) as PickContext, controller.signal)
+        .then(reply => { if (!controller.signal.aborted) setState({ key, reply }); })
+        .catch(() => { if (!controller.signal.aborted) setState({ key, error: true }); });
+    }, 150);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+  }, [active, team.id, key, context]);
+  // Key checking hides stale results immediately, even before effect cleanup runs.
+  const current = active && state?.key === key ? state : undefined;
+  const picks = current?.reply?.picks ?? [];
+  const debug = import.meta.env.DEV && import.meta.env.VITE_PICK_DEBUG === 'true';
   const blind = !actions.some(a => a.kind === 'PICK');
   const phase = !turn ? 'Draft complete' : turn.kind === 'BAN' ? 'Ban phase' : blind ? 'Blind pick' : 'Pick phase';
   const placeholders = <div className="advice-portrait-grid" aria-hidden="true">
     {Array.from({ length: 6 }, (_, i) => <span className="advice-empty-portrait" key={i}>◇</span>)}
   </div>;
   return {
+    recordSelected: (championId: string) => {
+      if (current?.reply) void recordPickSelection(team.id, current.reply.requestId, championId);
+    },
     left: <aside className="recommendation-panel draft-advice">
       <span className="eyebrow">DRAFT IDEAS</span>
       <p className="advice-phase" role="status">{phase}</p>
@@ -21,15 +45,26 @@ export default function useDraftAdvice({ format, actions }: Props) {
         <p className="muted">{!turn ? 'Bans complete.' : turn.kind === 'BAN' ? 'Ban recommendations will appear here.' : 'Available during ban phases.'}</p>
       </section>
       <section className={turn?.kind === 'PICK' ? 'advice-group active' : 'advice-group'}>
-        <h3>Pick suggestions</h3>{placeholders}
-        <p className="muted">{!turn ? 'Draft finished. Record your result after playing.' : blind
-          ? 'Blind-pick ideas before either team has picked.' : 'Pick ideas based on the current draft.'}</p>
+        <h3>Pick suggestions</h3>
+        {picks.length ? <div className="advice-portrait-grid">{picks.map(pick => {
+          const champion = catalog.champions.find(c => c.id === pick.championId);
+          if (!champion) return null;
+          return <div key={pick.championId}>
+            <button className="advice-pick" title={champion.name} aria-label={`Suggest ${champion.name}`}
+              disabled={disabled} onClick={() => onSelect(champion.id)}><img src={champion.portrait} alt={champion.name} /></button>
+            {debug && <small>Java {pick.javaScore.toFixed(1)} · ML +{pick.mlBonus.toFixed(1)} · Final {pick.score.toFixed(1)}</small>}
+          </div>;
+        })}</div> : placeholders}
+        <p className="muted">{!turn ? 'Draft finished. Record your result after playing.' : !active ? 'Available during pick phases.'
+          : current?.error ? 'Pick suggestions unavailable. You can continue drafting.'
+          : !current?.reply ? 'Updating pick suggestions…' : !picks.length ? 'No saved-pool picks fit the current draft.'
+          : blind ? 'Blind-pick ideas from your saved pools.' : 'Pick ideas from your saved pools.'}</p>
       </section>
-      <small className="muted">The role-free recommendation engine update is next. These are empty slots, not scored recommendations.</small>
+      <small className="muted">Suggestions preserve possible player swaps. Confirm lanes after the game.</small>
     </aside>,
     right: <aside className="recommendation-panel draft-advice">
       <span className="eyebrow">BEATRICE</span><h3>Draft assistance</h3>
-      <div className="intel-placeholder">◇<small>Awaiting recommendation engine</small></div>
+      <div className="intel-placeholder">◇<small>No chat model connected</small></div>
       <p className="muted">Draft explanations will appear here. No lane assignments are needed during drafting.</p>
       <p className="muted">After the game, record win or loss and confirm the lanes actually played.</p>
     </aside>,

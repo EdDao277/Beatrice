@@ -37,3 +37,6 @@ desktop.ini
 __pycache__/
 .venv-ranker/
 *~
+
+# Personal command reference (local only)
+/LOCAL-COMMANDS.md
