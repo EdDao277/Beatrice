@@ -36,7 +36,8 @@ export default function DraftBoard({ team, catalog, onPending, onBusy, onRecorde
   useEffect(() => { onBusy(busy || lineupBusy); }, [busy, lineupBusy, onBusy]);
   const champion = (id: string | null) => catalog.champions.find(c => c.id === id);
   const advice = useDraftAdvice({ format, actions, side, team, catalog, onSelect: setSelected,
-    disabled: locked || turn?.kind !== 'PICK' || actingSide !== side });
+    disabled: locked || turn?.kind !== 'PICK' || actingSide !== side,
+    banDisabled: locked || turn?.kind !== 'BAN' || actingSide !== side });
 
   function reset(nextFormat = format) {
     if (lineupBusy || (lineupDirty && !window.confirm('Discard unsaved lineup edits and start a new draft?'))) return;

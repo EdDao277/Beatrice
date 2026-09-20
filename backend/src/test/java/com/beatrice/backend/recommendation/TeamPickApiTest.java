@@ -26,7 +26,7 @@ class TeamPickApiTest {
         when(model.rank(anyString(),anyString(),anyList(),anyList(),anyList()))
             .thenReturn(new PickModelClient.Result(null,"ML_UNAVAILABLE",1));
     }
-    @Test void guardsFullCandidateRankingBeforeTopThreeAndPreservesColdCandidate() throws Exception {
+    @Test void guardsFullCandidateRankingAndPreservesColdCandidate() throws Exception {
         var team=teams.create(new TeamData.Create("Guarded ranking fixture"));
         teams.update(team.id(),new TeamData.Update(team.name(),team.version(),team.players().stream().map(p->
             new TeamData.Player(p.role(),"Fixture","",p.role()==TeamData.Role.TOP?List.of(
@@ -42,7 +42,7 @@ class TeamPickApiTest {
         String url="/api/teams/"+team.id()+"/draft/picks";
         String body="{\"format\":\"RANKED\",\"side\":\"BLUE\",\"patch\":\"test\",\"actions\":[]}";
         mvc.perform(post(url).contentType("application/json").content(body)).andExpect(status().isOk())
-            .andExpect(jsonPath("$.picks.length()").value(3))
+            .andExpect(jsonPath("$.picks.length()").value(4))
             .andExpect(jsonPath("$.picks[0].championId").value("C1"))
             .andExpect(jsonPath("$.picks[0].javaScore").value(67.5))
             .andExpect(jsonPath("$.picks[1].championId").value("C0"))
@@ -53,6 +53,29 @@ class TeamPickApiTest {
             .andExpect(jsonPath("$.picks[2].championId").value("C3"))
             .andExpect(jsonPath("$.picks[2].mlBonus").value(0))
             .andExpect(jsonPath("$.picks[2].mlEvidenceQuality").value("INSUFFICIENT_EVIDENCE"));
+    }
+    @Test void returnsSixFromTheFullGuardedRankingAndSixExactJavaFallbacks() throws Exception {
+        var team=teams.create(new TeamData.Create("Six picks"));
+        teams.update(team.id(),new TeamData.Update(team.name(),team.version(),team.players().stream().map(p->
+            new TeamData.Player(p.role(),"Fixture","",p.role()==TeamData.Role.TOP?
+                java.util.stream.IntStream.range(0,8).mapToObj(i->new TeamData.Champion("Champion "+i,10)).toList():List.of())).toList()));
+        when(model.rank(anyString(),anyString(),anyList(),anyList(),anyList())).thenAnswer(call->{
+            List<String> ids=call.getArgument(4);
+            org.junit.jupiter.api.Assertions.assertEquals(8,ids.size());
+            return new PickModelClient.Result(ids.stream().map(id->new GuardedPickBonus.Signal(id,
+                Double.parseDouble(id.substring(1)),100,10,40,true)).toList(),"VALID",1);
+        });
+        String url="/api/teams/"+team.id()+"/draft/picks";
+        String body="{\"format\":\"RANKED\",\"side\":\"BLUE\",\"patch\":\"test\",\"actions\":[]}";
+        mvc.perform(post(url).contentType("application/json").content(body)).andExpect(status().isOk())
+            .andExpect(jsonPath("$.picks[*].championId").value(org.hamcrest.Matchers.contains("C7","C6","C5","C4","C3","C2")))
+            .andExpect(jsonPath("$.picks[0].mlBonus").value(2.5))
+            .andExpect(jsonPath("$.picks[*].javaScore").value(org.hamcrest.Matchers.everyItem(org.hamcrest.Matchers.is(67.5))));
+        doReturn(new PickModelClient.Result(null,"ML_UNAVAILABLE",1)).when(model).rank(anyString(),anyString(),anyList(),anyList(),anyList());
+        mvc.perform(post(url).contentType("application/json").content(body)).andExpect(status().isOk())
+            .andExpect(jsonPath("$.picks[*].championId").value(org.hamcrest.Matchers.contains("C0","C1","C2","C3","C4","C5")))
+            .andExpect(jsonPath("$.picks[*].mlBonus").value(org.hamcrest.Matchers.everyItem(org.hamcrest.Matchers.is(0.0))))
+            .andExpect(jsonPath("$.picks[*].score").value(org.hamcrest.Matchers.everyItem(org.hamcrest.Matchers.is(67.5))));
     }
     @Test void usesSavedPoolMatchingWithoutTargetRoleAndKeepsComfortWhenMlUnavailable() throws Exception {
         var team=teams.create(new TeamData.Create("Guarded fixture"));

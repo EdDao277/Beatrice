@@ -23,6 +23,7 @@ it('locks a selection, undoes it, and confirms a format reset', async () => {
 it('records a completed tournament and retries an uncertain save with the same payload', async () => {
   const fetchMock = vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce(new Response(JSON.stringify({ id: 4 })));
   vi.stubGlobal('fetch', (url: string, options?: RequestInit) => {
+    if (url.endsWith('/draft/bans')) return Promise.resolve(new Response(JSON.stringify({ bans: [] })));
     if (url.endsWith('/draft/picks')) return Promise.resolve(new Response(JSON.stringify({ requestId: 'r', picks: [] })));
     if (url.endsWith('/draft/picks/selected')) return Promise.resolve(new Response(null, { status: 204 }));
     return url.includes('/datasets') ? Promise.resolve(new Response('[]')) : fetchMock(url, options);

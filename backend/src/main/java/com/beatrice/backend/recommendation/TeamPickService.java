@@ -74,7 +74,7 @@ public class TeamPickService {
         var inference=ml.rank(requestId,patch,allies,enemies,bases.stream().map(GuardedPickBonus.Base::championId).toList());
         var guarded=inference.signals()==null?GuardedPickBonus.fallback(bases,inference.status()):GuardedPickBonus.apply(bases,inference.signals());
         diagnostics.record(requestId,teamId,bases,guarded,inference);
-        var picks=guarded.picks().stream().limit(3).map(p->{
+        var picks=guarded.picks().stream().limit(6).map(p->{
             var base=details.get(p.championId());
             return new Pick(p.championId(),p.javaScore(),p.mlBonus(),p.score(),base.coverage(),base.components(),base.warnings(),base.evidence(),
                 feasible.get(p.championId()),scoringRoles.get(p.championId()),p.mlEvidenceQuality());

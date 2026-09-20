@@ -63,7 +63,10 @@ public final class RecommendationEngine {
         return List.copyOf(picks);
     }
     public Result recommend(Context c) {
-        var picks=scorePicks(c);
+        return new Result(top(scorePicks(c)),top(scoreBans(c)),"comfort-evidence-v1");
+    }
+    /** Full evidence-backed ban list; callers choose a display limit without changing pick scoring. */
+    public List<Candidate> scoreBans(Context c) {
         var bans=new ArrayList<Candidate>();var candidates=new TreeSet<String>();
         for(var e:c.evidence()) {
             if(e.kind().equals("ROLE")) candidates.add(e.championId());
@@ -94,7 +97,7 @@ public final class RecommendationEngine {
             warnings.add("Opponent champion pools are unknown. Observational results do not establish causation.");
             bans.add(candidate(id,parts,reasons,warnings,used));
         }
-        return new Result(top(picks),top(bans),"comfort-evidence-v1");
+        return List.copyOf(bans);
     }
     private Evidence role(Context c,String id,String role) {return c.evidence().stream().filter(e->e.kind().equals("ROLE") && e.championId().equals(id) && e.role().equals(role)).findFirst().orElse(null);}
     private double pairScore(Context c,String id,Evidence baseline,String kind,Map<String,String> assignments,List<Evidence> used) {
